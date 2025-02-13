@@ -11,6 +11,10 @@ import kotlinx.coroutines.launch
 class HabitViewModel(private val repository: HabitRepository) : ViewModel() {
     val allHabits: LiveData<List<Habit>> = repository.getAllHabits().asLiveData()
 
+    fun addHabit(habit: Habit) = viewModelScope.launch {
+        repository.insert(habit)
+    }
+
     fun insert(habit: Habit) = viewModelScope.launch {
         repository.insert(habit)
     }

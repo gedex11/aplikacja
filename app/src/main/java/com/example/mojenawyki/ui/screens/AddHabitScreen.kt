@@ -1,13 +1,16 @@
 package com.example.mojenawyki.ui.screens
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.launch
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -22,11 +25,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.example.mojenawyki.Manifest
+import coil.compose.rememberAsyncImagePainter
 import com.example.mojenawyki.data.Habit
 import com.example.mojenawyki.ui.HabitViewModel
 
@@ -41,7 +45,6 @@ fun AddHabitScreen(
     var frequency by remember { mutableStateOf("") }
     var time by remember { mutableStateOf("") }
 
-    var habitName by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
     var hasImagePermission by remember { mutableStateOf(false) }
@@ -68,6 +71,7 @@ fun AddHabitScreen(
         }
     }
 
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Add Habit") })
@@ -78,7 +82,8 @@ fun AddHabitScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(innerPadding)
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
                 value = name,
@@ -87,6 +92,7 @@ fun AddHabitScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.size(16.dp))
+
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
@@ -108,15 +114,41 @@ fun AddHabitScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.size(16.dp))
+            // Kod wyboru zdjęcia
+            if (selectedImageUri != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(selectedImageUri),
+                    contentDescription = "Wybrane zdjęcie",
+                    modifier = Modifier.size(128.dp)
+                )
+            } else {
+                Image(
+                    painter = rememberAsyncImagePainter(com.example.mojenawyki.R.drawable.ic_launcher_foreground),
+                    contentDescription = "Domyślne zdjęcie",
+                    modifier = Modifier
+                        .size(128.dp)
+                        .clickable {
+                            if (hasImagePermission) {
+                                pickImageLauncher.launch("image/*")
+                            } else {
+                                requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                            }
+                        }
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            // Koniec kodu wyboru zdjęcia
             Button(
                 onClick = {
+                    val imagePath = selectedImageUri?.toString()
                     val habit = Habit(
                         name = name,
                         description = description,
                         frequency = frequency,
-                        time = time
+                        time = time,
+                        imagePath = imagePath
                     )
-                    viewModel.insert(habit)
+                    viewModel.addHabit(habit)
                     onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth()
